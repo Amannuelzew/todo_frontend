@@ -1,8 +1,6 @@
 //import TodoForm from "./TodoForm";
 import { Input } from "@/components/ui/input";
-import Todo from "./components/Todo";
 import { useEffect, useState } from "react";
-import { hoursToSeconds } from "date-fns";
 import SearchBar from "./components/SearchBar";
 import {
   Accordion,
@@ -12,7 +10,7 @@ import {
 } from "./components/ui/accordion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { infer, z } from "zod";
+import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -23,6 +21,17 @@ import {
 import { todo } from "node:test";
 import { Button } from "./components/ui/button";
 import { DeleteIcon, EditIcon, TrashIcon } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 interface Todo {
   id: BigInteger;
   todo_name: string;
@@ -68,6 +77,14 @@ function App() {
   const fetch_data = (data) => {
     setTodos(data);
   };
+  const handle_delete = (id) => {
+    fetch(`http://localhost:8000/api/todo/${id}`, {
+      method: "DELETE",
+    }).then((res) => {
+      console.log(id, "dsadasdas");
+      setTodos(todos.filter((todo) => todo.id != id));
+    });
+  };
   useEffect(() => {
     fetch("http://localhost:8000/api/todo/", {})
       .then((res) => res.json())
@@ -91,7 +108,6 @@ function App() {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
 
-    alert(values.todo_name);
     fetch("http://localhost:8000/api/todo/", {
       method: "POST",
       headers: { "content-Type": "application/json" },
@@ -105,7 +121,7 @@ function App() {
         setTodos([...todos, data]);
         setTitle("");
       });
-    values.todo_name = "";
+    form.reset();
   }
   return (
     <>
@@ -142,13 +158,44 @@ function App() {
               <AccordionContent>
                 <div className="grid">
                   {todo.description}
-                  <div className="space-x-3 m-2">
+                  <div className="space-x-3 my-2">
                     <Button variant="outline" size="icon">
                       <EditIcon className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon">
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          className=" bg-red-600  hover:bg-red-500"
+                          variant="outline"
+                          size="icon"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Are you absolutely sure?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently
+                            delete your Todo.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            onClick={() => handle_delete(todo.id)}
+                          >
+                            <a href={`/edit/${id}`}>Cancel</a>
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handle_delete(todo.id)}
+                          >
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </AccordionContent>
