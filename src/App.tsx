@@ -3,35 +3,60 @@ import { Input } from "@/components/ui/input";
 import Todo from "./components/Todo";
 import { useEffect, useState } from "react";
 import { hoursToSeconds } from "date-fns";
+import SearchBar from "./components/SearchBar";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./components/ui/accordion";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { infer, z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "./components/ui/form";
+import { todo } from "node:test";
+import { Button } from "./components/ui/button";
+import { DeleteIcon, EditIcon, TrashIcon } from "lucide-react";
 interface Todo {
-  title: string;
+  id: BigInteger;
+  todo_name: string;
   description: string;
   dueDate: string;
   tags: string[];
 }
 
-// const todos: Todo[] = [
-//   {
-//     title: "Complete project",
-//     description: "Finish the coding part of the project",
-//     dueDate: "2024-04-30",
-//     tags: ["work", "programming"],
-//   },
-//   {
-//     title: "Buy groceries",
-//     description: "Get fruits, vegetables, and milk",
-//     dueDate: "2024-04-15",
-//     tags: ["personal", "shopping"],
-//   },
-//   {
-//     title: "Exercise",
-//     description: "Go for a jog in the park",
-//     dueDate: "2024-04-16",
-//     tags: ["personal", "health"],
-//   },
-// ];
+/* const todos: Todo[] = [
+  {
+    id: 1,
+    todo_name: "Complete project",
+    description: "Finish the coding part of the project",
+    dueDate: "2024-04-30",
+    tags: ["work", "programming"],
+  },
+  {
+    id: 2,
+    todo_name: "Buy groceries",
+    description: "Get fruits, vegetables, and milk",
+    dueDate: "2024-04-15",
+    tags: ["personal", "shopping"],
+  },
+  {
+    id: 3,
+    todo_name: "Exercise",
+    description: "Go for a jog in the park",
+    dueDate: "2024-04-16",
+    tags: ["personal", "health"],
+  },
+]; */
 function App() {
   const [todos, setTodos] = useState([]);
+  const [title, setTitle] = useState("");
   const handle_all = (e) => {
     setTodos(todos);
   };
@@ -51,14 +76,85 @@ function App() {
         fetch_data(data);
       });
   }, []);
+  const formSchema = z.object({
+    todo_name: z.string().min(2, {
+      message: "title must be at least 2 characters.",
+    }),
+  });
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      todo_name: "",
+    },
+  });
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+
+    alert(values.todo_name);
+    fetch("http://localhost:8000/api/todo/", {
+      method: "POST",
+      headers: { "content-Type": "application/json" },
+      body: JSON.stringify({
+        todo_name: values.todo_name,
+        tag: [{ id: 1, name: "New" }],
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setTodos([...todos, data]);
+        setTitle("");
+      });
+    values.todo_name = "";
+  }
   return (
     <>
       <main className="grid rounded shadow-md mx-auto p-4 space-y-6 max-w-md">
-        <Input type="text" placeholder="Todo" />
+        <p className="text-sm text-muted-foreground">
+          Press{" "}
+          <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+            <span className="text-xs">⌘</span>K
+          </kbd>{" "}
+          for search
+        </p>
+        <SearchBar todos={todos} />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="todo_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="Todo" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </form>
+        </Form>
 
-        {todos.map((todo, index) => (
-          <Todo todo={todo} key={index} />
-        ))}
+        <Accordion type="single" collapsible className="w-full">
+          {todos.map((todo, index) => (
+            <AccordionItem value={`item-${index}`} key={index}>
+              <AccordionTrigger>{todo.todo_name}</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid">
+                  {todo.description}
+                  <div className="space-x-3 m-2">
+                    <Button variant="outline" size="icon">
+                      <EditIcon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon">
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
 
         <div className="flex justify-between">
           <p>{todos.length} | Todos</p>
