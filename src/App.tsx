@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Link } from "react-router-dom";
 interface Todo {
   id: BigInteger;
   todo_name: string;
@@ -157,10 +158,13 @@ function App() {
               <AccordionTrigger>{todo.todo_name}</AccordionTrigger>
               <AccordionContent>
                 <div className="grid">
-                  {todo.description}
+                  <p>{todo.description}</p>
+                  <p className="text-sm text-end ">{todo.due_date}</p>
                   <div className="space-x-3 my-2">
                     <Button variant="outline" size="icon">
-                      <EditIcon className="h-4 w-4" />
+                      <Link to="/edit" state={{ data: todo }}>
+                        <EditIcon className="h-4 w-4" />
+                      </Link>
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -183,11 +187,7 @@ function App() {
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel
-                            onClick={() => handle_delete(todo.id)}
-                          >
-                            <a href={`/edit/${id}`}>Cancel</a>
-                          </AlertDialogCancel>
+                          <AlertDialogCancel>Cancel </AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handle_delete(todo.id)}
                           >

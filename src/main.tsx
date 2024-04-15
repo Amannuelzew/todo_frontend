@@ -13,7 +13,7 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: "edit/:Id",
+    path: "edit/",
     element: <TodoForm />,
   },
 ]);
@@ -22,7 +22,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <ModeToggle />
       <RouterProvider router={router} />
-      <App />
     </ThemeProvider>
   </React.StrictMode>
 );
